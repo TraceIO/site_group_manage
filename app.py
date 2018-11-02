@@ -159,6 +159,14 @@ def manage_site_generate(id):
                             # html.render()
                             f.write(html)
 
+                    # 更新网站状态为：已生成
+                    sql = "UPDATE site SET state=1 WHERE id=" + str(id)
+                    cursor.execute(sql)
+
+                    # connection is not autocommit by default. So you must commit to save
+                    # your changes.
+                    connection.commit()
+
     finally:
         connection.close()
 
