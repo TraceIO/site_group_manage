@@ -68,6 +68,7 @@ def manage_site_add():
         template = int(request.form.get('template'))
         description = request.form.get('description')
         web_path = domain.replace('.', '_')
+        article_ids = request.form.get('content_id')
 
         print("添加网站POST｛%s,%s,%s,%s,%s｝" % (title, domain, template, keyword, description))
         # Connect to the database
@@ -89,10 +90,10 @@ def manage_site_add():
                     print(result)
                     if result is None:
                         # Create a new record
-                        sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s)"
+                        sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`,`article_ids`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s,%s)"
                         cursor.execute(sql, (
                             str(title), str(web_path), template, str(domain), str(keyword), str(description), 0,
-                            int(time.time())))
+                            int(time.time()), str(article_ids)))
 
                         # connection is not autocommit by default. So you must commit to save
                         # your changes.
@@ -110,9 +111,6 @@ def manage_site_add():
 @app.route("/manage/site_generate/<int:id>")
 def manage_site_generate(id):
     print(id)
-    t = {}
-    # t['id'] = id
-    # t['title'] = 'aaaa'
     site = {}
     # Connect to the database
     connection = pymysql.connect(host='120.76.232.162',
@@ -136,7 +134,6 @@ def manage_site_generate(id):
                     return redirect("/manage/site_list")
                 else:
                     print("存在")
-                    t = site
                     site_id = site['template_id']
                     # 开始生成网站
                     PATH = os.path.dirname(
@@ -165,7 +162,7 @@ def manage_site_generate(id):
     finally:
         connection.close()
 
-    return Response(json.dumps(t), mimetype='application/json')
+    return Response(json.dumps(site), mimetype='application/json')
 
 
 # 复制文件
@@ -189,6 +186,37 @@ def copyFiles(sourceDir, targetDir):
 
         if os.path.isdir(sourceF):
             copyFiles(sourceF, targetF)
+
+
+@app.route("/manage/site_content_iframe")
+def manage_site_content_iframe():
+    template_type = request.args.get('t', '2')
+    print(template_type)
+    content_list = {}
+
+    connection = pymysql.connect(host='120.76.232.162',
+                                 user='root',
+                                 password='lcn@123',
+                                 db='site_group',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    try:
+        with connection.cursor() as cursor:
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                sql = "SELECT id,title FROM `content` LIMIT 0,10"
+                cursor.execute(sql)
+                content_list = cursor.fetchall()
+
+                # print(site_list)
+    finally:
+        connection.close()
+
+        # content_list.append(obj)
+
+    return render_template('/manage/site_content_iframe.html', list=content_list, template=int(template_type))
 
 
 if __name__ == '__main__':

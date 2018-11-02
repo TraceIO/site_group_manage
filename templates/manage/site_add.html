@@ -65,7 +65,7 @@
                 <legend>添加站点</legend>
             </fieldset>
 
-            <form class="layui-form" action="/manage/site_add" method="post">
+            <form class="layui-form" id="example" action="/manage/site_add" method="post">
                 <div class="layui-form-item">
                     <label class="layui-form-label">网站标题</label>
                     <div class="layui-input-block">
@@ -97,10 +97,10 @@
                     <div class="layui-inline">
                         <label class="layui-form-label">网站模版</label>
                         <div class="layui-input-inline">
-                            <select name="template" lay-verify="required">
+                            <select name="template" id="template" lay-verify="required">
                                 <option value="">请选择问题</option>
                                 <optgroup label="单页面">
-                                    <option value="1">模版1</option>
+                                    <option value="1" selected>模版1</option>
                                 </optgroup>
                                 <optgroup label="多页面">
                                     <option value="2">模版2</option>
@@ -114,9 +114,24 @@
                 <div class="layui-form-item layui-form-text">
                     <label class="layui-form-label">SEO描述</label>
                     <div class="layui-input-block">
-                        <textarea placeholder="网站SEO描述" name="description" lay-verify="required" class="layui-textarea"></textarea>
+                        <textarea placeholder="网站SEO描述" name="description" lay-verify="required"
+                                  class="layui-textarea"></textarea>
                     </div>
                 </div>
+                <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">网站内容</label>
+                    <div class="layui-input-block">
+                        <input type="hidden" name="content_id" id="content_id" value=""/>
+                        <ul id="content">
+
+
+                        </ul>
+                        <a id="add_content" href="javascript:;" class="layui-btn">
+                            <i class="layui-icon">&#xe608;</i> 添加网站内容
+                        </a>
+                    </div>
+                </div>
+
                 <!--<div class="layui-form-item layui-form-text">
                   <label class="layui-form-label">编辑器</label>
                   <div class="layui-input-block">
@@ -140,20 +155,34 @@
     </div>
 </div>
 <script src="/static/layui/layui.js"></script>
-<script>
-    //JavaScript代码区域
-    layui.use('element', function () {
-        var element = layui.element;
+{#<script src="//cdn.bootcss.com/jquery/1.12.3/jquery.min.js"></script>#}
 
-    });
-</script>
 
 <script>
+    var ifrmae;
     layui.use(['form', 'layedit', 'laydate'], function () {
+        var $ = layui.jquery;
+
+
         var form = layui.form
             , layer = layui.layer
             , layedit = layui.layedit
             , laydate = layui.laydate;
+
+        $('#add_content').on('click', function () {
+            {#layer.alert('Hi，我是tips', '吸附元素选择器，如#id');#}
+            //iframe层
+            var type = $("#template").val();
+            {#alert(type);#}
+            ifrmae = layer.open({
+                type: 2,
+                title: '选择内容',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['580px', '90%'],
+                content: '/manage/site_content_iframe?t=' + type //iframe的url
+            });
+        });
 
         //日期
         laydate.render({
@@ -197,17 +226,40 @@
 
         //表单初始赋值
         form.val('example', {
-            "username": "贤心" // "name": "value"
+            "title": "贤心" // "name": "value"
             , "password": "123456"
             , "interest": 1
             , "like[write]": true //复选框选中状态
             , "close": true //开关状态
             , "sex": "女"
             , "desc": "我爱 layui"
-        })
+        });
 
 
     });
+
+    function callback(content) {
+        {#var obj = v[0].title;#}
+        {#ifrmae.close();#}
+        {#var json  =  eval(v);#}
+        {#debugger;#}
+        var html = "";
+        var ids = "";
+        content.forEach(function (value, index, ar) {
+            var id = value.split("|")[0];
+            ids += id + ",";
+            var title = value.split("|")[1];
+            html += '<li><input type="checkbox" checked name="content[]" value="' + id + '" title="' + title + '" />' + title + '</li>';
+            {#alert(value);#}
+        });
+        {#alert(html);#}
+        document.getElementById("content").innerHTML = html;
+        document.getElementById("content_id").value = ids;
+
+        {#ifrmae.close();#}
+        layer.close(ifrmae);
+    }
+
 </script>
 
 </body>
