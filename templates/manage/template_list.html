@@ -1,0 +1,65 @@
+{% extends "manage/layout.html" %}
+{% block title %}模版管理-管理后台{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <div style="padding: 15px;">
+        <blockquote class="layui-elem-quote">
+
+
+{#            <a href="/manage/template_add" class="layui-btn">#}
+{#                <i class="layui-icon">&#xe608;</i> 添加模版#}
+{#            </a>#}
+
+        </blockquote>
+
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+            <legend>模版列表</legend>
+        </fieldset>
+        <div class="layui-form">
+            <table class="layui-table">
+                <colgroup>
+                    <col width="150">
+                    <col width="150">
+                    <col width="150">
+                    <col width="200">
+                    <col>
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>模版名称</th>
+                    <th>类型</th>
+                    <th>路径</th>
+                    <th>状态</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in list %}
+                    <tr>
+                        <td>{{ item.title }}</td>
+                        <td>{% if item.type == 0 %}单页面{% else %}多页面{% endif %}</td>
+                        <td>/static/template/{{ item.path }}/</td>
+
+                        <td>
+                            {% if item.state == 1 %}
+                                <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-disabled">正常</a>
+                            {% else %}
+                                <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-disabled">禁用</a>
+                            {% endif %}
+
+
+                        </td>
+                        <td>
+                            <div class="layui-btn-group">
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -12,9 +12,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return 'Hello World!'
+    # return 'Hello World!'
+    return redirect("/manage/login")
 
 
+# 后台登录
 @app.route('/manage/login', methods=['POST', 'GET'])
 def manage_login():
     if request.method == "GET":
@@ -28,6 +30,7 @@ def manage_login():
         return redirect("/manage/home")
 
 
+# 管理后台首页
 @app.route('/manage/home', methods=['POST', 'GET'])
 def manage_home():
     return render_template('/manage/index.html', username='Richie')
@@ -49,7 +52,7 @@ def manage_site_list():
 
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT site.*,servers.name,servers.host FROM `site` left join `servers` on servers.id = site.server_id  LIMIT 0,10"
+                sql = "SELECT site.*,servers.name,servers.host,site_template.type,site_template.title as template_title FROM `site` left join `servers` on servers.id = site.server_id left join `site_template` on site_template.id = site.template_id LIMIT 0,10"
                 cursor.execute(sql)
                 site_list = cursor.fetchall()
 
@@ -151,12 +154,15 @@ def manage_site_generate(id):
 
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT site.*,site_template.type FROM `site` left join `site_template` on site_template.id = site.template_id WHERE site.`id`=%s LIMIT 1"
+                sql = "SELECT site.*,site_template.type as template_type,site_template.path as template_path FROM `site` left join `site_template` on site_template.id = site.template_id WHERE site.`id`=%s LIMIT 1"
                 cursor.execute(sql, id)
                 site = cursor.fetchone()
                 print(site)
                 if site is None:
-                    print("不存在")
+                    print("网站不存在")
+                    return redirect("/manage/site_list")
+                elif site['template_type'] is None:
+                    print("网站模版不存在")
                     return redirect("/manage/site_list")
                 else:
                     article = {}
@@ -170,7 +176,7 @@ def manage_site_generate(id):
 
                     # 开始生成网站
                     PATH = os.path.dirname(os.path.abspath(__file__))
-                    template_path = os.path.join(PATH, 'static/template/' + str(site['template_id']))
+                    template_path = os.path.join(PATH, 'static/template/' + str(site['template_path']))
 
                     # 初始化模版
                     TEMPLATE_ENVIRONMENT = Environment(autoescape=False,
@@ -179,9 +185,12 @@ def manage_site_generate(id):
 
                     # 创建网站生成的目录
                     targetDir = os.path.join(PATH, 'output/' + site['web_path'])
+                    # 拷贝模版中的样式及图片文件
                     copyFiles(template_path, targetDir)
                     print("拷贝模版中的样式及图片文件成功")
-                    if site['template_id'] == 1:
+
+                    if site['template_type'] == 0:
+                        # 单页面网站生成html
                         # 读取html模版并赋值，
                         html = TEMPLATE_ENVIRONMENT.get_template('index.html').render(site=site, article=article)
 
@@ -192,12 +201,12 @@ def manage_site_generate(id):
                             f.write(html)
 
                         # 生成nginx conf
-
-                        conf = ''
+                        # conf = ''
                         confFile = open(os.path.join(PATH, 'static/template/nginx.conf'))
                         webConf = confFile.read().replace('{{domain}}', site['domain']).replace('{{webpath}}',
                                                                                                 site['web_path'])
-                        print(webConf)
+                        # print(webConf)
+                        # 生成nginx配置文件
                         with open(targetDir + "/" + site['web_path'] + ".conf", 'w') as f:
                             f.write(webConf)
 
@@ -238,6 +247,7 @@ def copyFiles(sourceDir, targetDir):
             copyFiles(sourceF, targetF)
 
 
+# 网站资讯内容弹窗
 @app.route("/manage/site_content_iframe")
 def manage_site_content_iframe():
     template_type = request.args.get('t', '2')
@@ -269,6 +279,7 @@ def manage_site_content_iframe():
     return render_template('/manage/site_content_iframe.html', list=content_list, template=int(template_type))
 
 
+# 发布网站
 @app.route("/manage/site_publish/<int:id>")
 def manage_site_publish(id):
     print("发布网站%s", str(id))
@@ -283,30 +294,35 @@ def manage_site_publish(id):
 
     try:
         with connection.cursor() as cursor:
+            # Read a single record
+            sql = "SELECT site.*,servers.id as serverId,servers.host,servers.port,servers.user_name,servers.user_pwd,servers.nginx_config_path,servers.web_site_path FROM `site` left join `servers` on servers.id=site.server_id WHERE site.`id`=%s LIMIT 1"
+            cursor.execute(sql, id)
+            site = cursor.fetchone()
+            # print(site)
+            if site is None:
+                print("网站不存在")
+                return redirect("/manage/site_list")
+            elif site['serverId'] is None:
+                print("服务器不存在")
+                return redirect("/manage/site_list")
+            else:
+                print("开始发布%s" % site['title'])
 
-            with connection.cursor() as cursor:
-                # Read a single record
-                sql = "SELECT * FROM `site` WHERE `id`=%s LIMIT 1"
-                cursor.execute(sql, id)
-                site = cursor.fetchone()
-                print(site)
-                if site is None:
-                    print("不存在")
-                    return redirect("/manage/site_list")
-                else:
-                    print("开始发布%s" % site['title'])
-                    remote_dir = "/var/www/%s/" % site['web_path']
-                    PATH = os.path.dirname(os.path.abspath(__file__))
-                    local_dir = os.path.join(PATH, 'output/%s' % site['web_path'])
+                # remote_dir = "/var/www/%s/" % site['web_path']
+                remote_dir = site['web_site_path'] + site['web_path']
 
-                    # 发布网站到服务器 （上传网站、上传nginx conf）
-                    sftp_put(remote_dir, local_dir, site['web_path'])
+                PATH = os.path.dirname(os.path.abspath(__file__))
+                local_dir = os.path.join(PATH, 'output/%s' % site['web_path'])
 
-                    # 更新发布状态
-                    # 更新网站状态为：已生成
-                    sql = "UPDATE site SET is_released=1 WHERE id=" + str(id)
-                    cursor.execute(sql)
-                    connection.commit()
+                # 发布网站到服务器 （上传网站、上传nginx conf）
+                sftp_put(remote_dir, local_dir, site['web_path'], site['host'], site['port'], site['user_name'],
+                         site['user_pwd'])
+
+                # 更新发布状态
+                # 更新网站状态为：已生成
+                sql = "UPDATE site SET is_released=1 WHERE id=" + str(id)
+                cursor.execute(sql)
+                connection.commit()
 
     finally:
         connection.close()
@@ -318,6 +334,7 @@ def manage_site_publish(id):
     # # connection is not autocommit by default. So you must commit to save
     # # your changes.
     # connection.commit()
+
     site = {
         "t": "adsfs"
     }
@@ -326,10 +343,10 @@ def manage_site_publish(id):
 
 
 # sftp上传到服务器
-def sftp_put(remote_dir, local_dir, site_id):
+def sftp_put(remote_dir, local_dir, site_id, server_host, server_port, user_name, user_pwd):
     # 连接服务器
-    transport = paramiko.Transport(('120.76.84.84', 22))
-    transport.connect(username='root', password='dm@ycxg2018')
+    transport = paramiko.Transport((server_host, server_port))
+    transport.connect(username=user_name, password=user_pwd)
     sftp = paramiko.SFTPClient.from_transport(transport)
 
     print('upload file start %s ' % datetime.datetime.now())
@@ -397,5 +414,54 @@ def sftp_put(remote_dir, local_dir, site_id):
     transport.close()
 
 
+# 模版管理
+@app.route("/manage/template_list")
+def template_list():
+    template_list = {}
+    connection = pymysql.connect(host='120.76.232.162',
+                                 user='root',
+                                 password='lcn@123',
+                                 db='site_group',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM `site_template` LIMIT 0,10"
+            cursor.execute(sql)
+            template_list = cursor.fetchall()
+
+            # print(site_list)
+    finally:
+        connection.close()
+
+    return render_template('/manage/template_list.html', list=template_list)
+
+
+# 服务管理
+@app.route("/manage/server_list")
+def server_list():
+    server_list = {}
+    connection = pymysql.connect(host='120.76.232.162',
+                                 user='root',
+                                 password='lcn@123',
+                                 db='site_group',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT * FROM `servers` LIMIT 0,10"
+            cursor.execute(sql)
+            server_list = cursor.fetchall()
+
+            # print(site_list)
+    finally:
+        connection.close()
+
+    return render_template('/manage/server_list.html', list=server_list)
+
+
 if __name__ == '__main__':
+    # app.run(debug=True, threaded=True)
     app.run()
