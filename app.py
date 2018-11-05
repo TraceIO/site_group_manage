@@ -30,9 +30,10 @@ def manage_login():
 
 @app.route('/manage/home', methods=['POST', 'GET'])
 def manage_home():
-    return render_template('/manage/index.html', title='Home')
+    return render_template('/manage/index.html', username='Richie')
 
 
+# 网站列表
 @app.route('/manage/site_list', methods=['POST', 'GET'])
 def manage_site_list():
     site_list = {}
@@ -48,7 +49,7 @@ def manage_site_list():
 
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT * FROM `site` LIMIT 0,10"
+                sql = "SELECT site.*,servers.name,servers.host FROM `site` left join `servers` on servers.id = site.server_id  LIMIT 0,10"
                 cursor.execute(sql)
                 site_list = cursor.fetchall()
 
@@ -59,12 +60,36 @@ def manage_site_list():
     return render_template('/manage/site_list.html', title='Home', site_list=site_list)
 
 
+# 添加网站
 @app.route('/manage/site_add', methods=['POST', 'GET'])
 def manage_site_add():
     if request.method == "GET":
-        return render_template('/manage/site_add.html', title='Home')
+        servers = {}
+        templates = {}
+        connection = pymysql.connect(host='120.76.232.162',
+                                     user='root',
+                                     password='lcn@123',
+                                     db='site_group',
+                                     charset='utf8mb4',
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                # 查询服务器
+                server_sql = "SELECT * FROM `servers` WHERE state = 1"
+                cursor.execute(server_sql)
+                servers = cursor.fetchall()
+                # 查询模版
+                template_sql = "SELECT * FROM `site_template` WHERE state = 1  and type=0"
+                cursor.execute(template_sql)
+                templates = cursor.fetchall()
+
+        finally:
+            connection.close()
+
+        return render_template('/manage/site_add.html', title='Home', servers=servers, templates=templates)
     if request.method == "POST":
         title = request.form.get('title')
+        server_id = request.form.get('server')
         keyword = request.form.get('keyword')
         domain = str(request.form.get('domain')).replace('http://', '').replace('https://', '')
         template = int(request.form.get('template'))
@@ -83,27 +108,25 @@ def manage_site_add():
 
         try:
             with connection.cursor() as cursor:
+                # Read a single record
+                sql = "SELECT * FROM `site` WHERE `domain`=%s LIMIT 1"
+                cursor.execute(sql, domain)
+                result = cursor.fetchone()
+                print(result)
+                if result is None:
+                    # 添加站点
+                    sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`,`article_ids`,`server_id`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s,%s,%s)"
+                    cursor.execute(sql, (
+                        str(title), str(web_path), template, str(domain), str(keyword), str(description), 0,
+                        int(time.time()), str(article_ids), str(server_id)))
 
-                with connection.cursor() as cursor:
-                    # Read a single record
-                    sql = "SELECT * FROM `site` WHERE `domain`=%s LIMIT 1"
-                    cursor.execute(sql, domain)
-                    result = cursor.fetchone()
-                    print(result)
-                    if result is None:
-                        # 添加站点
-                        sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`,`article_ids`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s,%s)"
-                        cursor.execute(sql, (
-                            str(title), str(web_path), template, str(domain), str(keyword), str(description), 0,
-                            int(time.time()), str(article_ids)))
+                    # connection is not autocommit by default. So you must commit to save
+                    # your changes.
+                    connection.commit()
 
-                        # connection is not autocommit by default. So you must commit to save
-                        # your changes.
-                        connection.commit()
-
-                    else:
-                        print("存在")
-                        return redirect("/manage/site_add")
+                else:
+                    print("存在")
+                    return redirect("/manage/site_add")
 
         finally:
             connection.close()
@@ -128,7 +151,7 @@ def manage_site_generate(id):
 
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT * FROM `site` WHERE `id`=%s LIMIT 1"
+                sql = "SELECT site.*,site_template.type FROM `site` left join `site_template` on site_template.id = site.template_id WHERE site.`id`=%s LIMIT 1"
                 cursor.execute(sql, id)
                 site = cursor.fetchone()
                 print(site)
@@ -136,6 +159,13 @@ def manage_site_generate(id):
                     print("不存在")
                     return redirect("/manage/site_list")
                 else:
+                    article = {}
+                    # 读取内容
+                    if site['type'] == 0:
+                        article_sql = "SELECT * FROM `article` WHERE `id`=%s LIMIT 1"
+                        cursor.execute(article_sql, str(site['article_ids']).replace(',', ''))
+                        article = cursor.fetchone()
+
                     print("开始生成网站：%s，%s" % (id, site['title']))
 
                     # 开始生成网站
@@ -153,7 +183,7 @@ def manage_site_generate(id):
                     print("拷贝模版中的样式及图片文件成功")
                     if site['template_id'] == 1:
                         # 读取html模版并赋值，
-                        html = TEMPLATE_ENVIRONMENT.get_template('index.html').render(title=site['title'])
+                        html = TEMPLATE_ENVIRONMENT.get_template('index.html').render(site=site, article=article)
 
                         # 生成网站
                         fname = targetDir + "/index.html"
@@ -226,7 +256,7 @@ def manage_site_content_iframe():
 
             with connection.cursor() as cursor:
                 # Read a single record
-                sql = "SELECT id,title FROM `content` LIMIT 0,10"
+                sql = "SELECT id,title FROM `article` LIMIT 0,10"
                 cursor.execute(sql)
                 content_list = cursor.fetchall()
 
@@ -272,7 +302,11 @@ def manage_site_publish(id):
                     # 发布网站到服务器 （上传网站、上传nginx conf）
                     sftp_put(remote_dir, local_dir, site['web_path'])
 
-
+                    # 更新发布状态
+                    # 更新网站状态为：已生成
+                    sql = "UPDATE site SET is_released=1 WHERE id=" + str(id)
+                    cursor.execute(sql)
+                    connection.commit()
 
     finally:
         connection.close()
@@ -291,6 +325,7 @@ def manage_site_publish(id):
     return Response(json.dumps(site), mimetype='application/json')
 
 
+# sftp上传到服务器
 def sftp_put(remote_dir, local_dir, site_id):
     # 连接服务器
     transport = paramiko.Transport(('120.76.84.84', 22))
