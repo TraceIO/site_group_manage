@@ -1,9 +1,11 @@
+import datetime
 import time
 import os
 import json
 from flask import Flask, render_template, Response, request, redirect
 import pymysql.cursors
 from jinja2 import Environment, FileSystemLoader
+import paramiko
 
 app = Flask(__name__)
 
@@ -89,7 +91,7 @@ def manage_site_add():
                     result = cursor.fetchone()
                     print(result)
                     if result is None:
-                        # Create a new record
+                        # 添加站点
                         sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`,`article_ids`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s,%s)"
                         cursor.execute(sql, (
                             str(title), str(web_path), template, str(domain), str(keyword), str(description), 0,
@@ -98,6 +100,7 @@ def manage_site_add():
                         # connection is not autocommit by default. So you must commit to save
                         # your changes.
                         connection.commit()
+
                     else:
                         print("存在")
                         return redirect("/manage/site_add")
@@ -108,9 +111,9 @@ def manage_site_add():
         return redirect("/manage/site_list")
 
 
+# 生成html
 @app.route("/manage/site_generate/<int:id>")
 def manage_site_generate(id):
-    print(id)
     site = {}
     # Connect to the database
     connection = pymysql.connect(host='120.76.232.162',
@@ -133,12 +136,11 @@ def manage_site_generate(id):
                     print("不存在")
                     return redirect("/manage/site_list")
                 else:
-                    print("存在")
-                    site_id = site['template_id']
+                    print("开始生成网站：%s，%s" % (id, site['title']))
+
                     # 开始生成网站
-                    PATH = os.path.dirname(
-                        os.path.abspath(__file__))  # + '/static/template/' + str(site_template) + '/'
-                    template_path = os.path.join(PATH, 'static/template/' + str(site_id))
+                    PATH = os.path.dirname(os.path.abspath(__file__))
+                    template_path = os.path.join(PATH, 'static/template/' + str(site['template_id']))
 
                     # 初始化模版
                     TEMPLATE_ENVIRONMENT = Environment(autoescape=False,
@@ -149,7 +151,7 @@ def manage_site_generate(id):
                     targetDir = os.path.join(PATH, 'output/' + site['web_path'])
                     copyFiles(template_path, targetDir)
                     print("拷贝模版中的样式及图片文件成功")
-                    if site_id == 1:
+                    if site['template_id'] == 1:
                         # 读取html模版并赋值，
                         html = TEMPLATE_ENVIRONMENT.get_template('index.html').render(title=site['title'])
 
@@ -159,8 +161,18 @@ def manage_site_generate(id):
                             # html.render()
                             f.write(html)
 
+                        # 生成nginx conf
+
+                        conf = ''
+                        confFile = open(os.path.join(PATH, 'static/template/nginx.conf'))
+                        webConf = confFile.read().replace('{{domain}}', site['domain']).replace('{{webpath}}',
+                                                                                                site['web_path'])
+                        print(webConf)
+                        with open(targetDir + "/" + site['web_path'] + ".conf", 'w') as f:
+                            f.write(webConf)
+
                     # 更新网站状态为：已生成
-                    sql = "UPDATE site SET state=1 WHERE id=" + str(id)
+                    sql = "UPDATE site SET is_generated=1 WHERE id=" + str(id)
                     cursor.execute(sql)
 
                     # connection is not autocommit by default. So you must commit to save
@@ -225,6 +237,129 @@ def manage_site_content_iframe():
         # content_list.append(obj)
 
     return render_template('/manage/site_content_iframe.html', list=content_list, template=int(template_type))
+
+
+@app.route("/manage/site_publish/<int:id>")
+def manage_site_publish(id):
+    print("发布网站%s", str(id))
+    site = {}
+    # Connect to the database
+    connection = pymysql.connect(host='120.76.232.162',
+                                 user='root',
+                                 password='lcn@123',
+                                 db='site_group',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    try:
+        with connection.cursor() as cursor:
+
+            with connection.cursor() as cursor:
+                # Read a single record
+                sql = "SELECT * FROM `site` WHERE `id`=%s LIMIT 1"
+                cursor.execute(sql, id)
+                site = cursor.fetchone()
+                print(site)
+                if site is None:
+                    print("不存在")
+                    return redirect("/manage/site_list")
+                else:
+                    print("开始发布%s" % site['title'])
+                    remote_dir = "/var/www/%s/" % site['web_path']
+                    PATH = os.path.dirname(os.path.abspath(__file__))
+                    local_dir = os.path.join(PATH, 'output/%s' % site['web_path'])
+
+                    # 发布网站到服务器 （上传网站、上传nginx conf）
+                    sftp_put(remote_dir, local_dir, site['web_path'])
+
+
+
+    finally:
+        connection.close()
+
+    # 更新网站状态为：已生成
+    # sql = "UPDATE site SET is_generated=1 WHERE id=" + str(id)
+    # cursor.execute(sql)
+    #
+    # # connection is not autocommit by default. So you must commit to save
+    # # your changes.
+    # connection.commit()
+    site = {
+        "t": "adsfs"
+    }
+
+    return Response(json.dumps(site), mimetype='application/json')
+
+
+def sftp_put(remote_dir, local_dir, site_id):
+    # 连接服务器
+    transport = paramiko.Transport(('120.76.84.84', 22))
+    transport.connect(username='root', password='dm@ycxg2018')
+    sftp = paramiko.SFTPClient.from_transport(transport)
+
+    print('upload file start %s ' % datetime.datetime.now())
+
+    # remote_dir = "/var/www/www_hwz_cc/"
+
+    # PATH = os.path.dirname(os.path.abspath(__file__))
+    # local_dir = os.path.join(PATH, 'output/www_hwz_cc')
+
+    for root, dirs, files in os.walk(local_dir):
+        print('[%s][%s][%s]' % (root, dirs, files))
+
+        for filespath in files:
+            local_file = os.path.join(root, filespath)
+            print(11, '[%s][%s][%s][%s]' % (root, filespath, local_file, local_dir))
+
+            a = local_file.replace(local_dir, '').replace('\\', '/').lstrip('/')
+
+            print('01', a, '[%s]' % remote_dir)
+
+            remote_file = os.path.join(remote_dir, a).replace('\\', '/')
+
+            print(22, remote_file)
+            try:
+                sftp.put(local_file, remote_file)
+            except Exception as e:
+
+                sftp.mkdir(os.path.split(remote_file)[0])
+
+                sftp.put(local_file, remote_file)
+
+                print("66 upload %s to remote %s" % (local_file, remote_file))
+
+        for name in dirs:
+
+            local_path = os.path.join(root, name)
+
+            print(0, local_path, local_dir)
+
+            a = local_path.replace(local_dir, '').replace('\\', '/').lstrip('/')
+
+            print(1, a)
+
+            print(1, remote_dir)
+            # remote_path = os.path.join(remote_dir, a).replace('\\', '/')
+
+            remote_path = remote_dir + a
+
+            print(33, remote_path)
+
+            try:
+                sftp.mkdir(remote_path)
+                print(44, "mkdir path %s" % remote_path)
+            except Exception as e:
+
+                print(55, e)
+    print('77,upload file success %s ' % datetime.datetime.now())
+    # 上传conf文件到nginx/conf.d
+    #
+    #
+    # # 将resutl.txt 上传至服务器 /tmp/result.txt
+    sftp.put(local_dir + '/' + site_id + '.conf', '/etc/nginx/conf.d/' + site_id + '.conf')
+    # # 将result.txt 下载到本地
+    # sftp.get('/tmp/result.txt', '~/yours.txt')
+    transport.close()
 
 
 if __name__ == '__main__':

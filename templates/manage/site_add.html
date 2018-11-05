@@ -98,14 +98,27 @@
                         <label class="layui-form-label">网站模版</label>
                         <div class="layui-input-inline">
                             <select name="template" id="template" lay-verify="required">
-                                <option value="">请选择问题</option>
+                                <option value="">请选择网站模版</option>
                                 <optgroup label="单页面">
                                     <option value="1" selected>模版1</option>
                                 </optgroup>
-                                <optgroup label="多页面">
-                                    <option value="2">模版2</option>
-                                    <option value="3">模版3</option>
-                                </optgroup>
+{#                                <optgroup label="多页面">#}
+{#                                    <option value="2">模版2</option>#}
+{#                                    <option value="3">模版3</option>#}
+{#                                </optgroup>#}
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+                 <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">网站服务器</label>
+                        <div class="layui-input-inline">
+                            <select name="server" id="server" lay-verify="required">
+                                <option value="">请选择网站服务器</option>
+                                    <option value="1" selected>默认服务器(120.76.84.84)</option>
+
                             </select>
                         </div>
                     </div>

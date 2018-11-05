@@ -72,6 +72,8 @@
                     <colgroup>
                         <col width="150">
                         <col width="150">
+                        <col width="150">
+                        <col width="150">
                         <col width="200">
                         <col>
                     </colgroup>
@@ -80,7 +82,9 @@
                         <th>网站标题</th>
                         <th>模版</th>
                         <th>域名</th>
+                        <th>服务器</th>
                         <th>描述</th>
+                        <th>状态</th>
                         <th>操作</th>
                     </tr>
                     </thead>
@@ -90,12 +94,37 @@
                             <td>{{ site.title }}</td>
                             <td>{{ site.template_id }}</td>
                             <td>{{ site.domain }}</td>
+                            <td>{{ site.server_ip }}</td>
                             <td>{{ site.description }}</td>
                             <td>
+                                {% if site.is_generated == 1 %}
+                                    <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-disabled">已生成</a>
+                                    {% if site.is_released == 1 %}
+                                        <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-disabled">已发布</a>
+                                    {% else %}
+                                        <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-disabled">未发布</a>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="javascript:;" class="layui-btn layui-btn-xs layui-btn-disabled">未生成</a>
+                                {% endif %}
+
+
+                            </td>
+                            <td>
                                 <div class="layui-btn-group">
-                                  <a href="/manage/site_generate/{{ site.id }}" class="layui-btn layui-btn-sm layui-btn-normal">生成网站</a>
-                                  <a href="#" class="layui-btn layui-btn-sm layui-btn-warm">编辑</a>
-                                  <button class="layui-btn layui-btn-sm layui-btn-danger">删除</button>
+                                    {% if site.is_generated == 1 %}
+                                        <a href="/manage/site_generate/{{ site.id }}" class="layui-btn layui-btn-sm layui-btn-normal">重新生成Html</a>
+                                        {% if site.is_released == 1 %}
+                                            <a href="#" class="layui-btn layui-btn-sm layui-btn-warm">发布更新</a>
+                                        {% else %}
+                                           <a href="/manage/site_publish/{{ site.id }}" class="layui-btn layui-btn-sm layui-btn-warm">发布网站</a>
+                                        {% endif %}
+                                    {% else %}
+                                       <a href="/manage/site_generate/{{ site.id }}" class="layui-btn layui-btn-sm layui-btn-normal">生成Html</a>
+                                    {% endif %}
+
+
+{#                                  <button class="layui-btn layui-btn-sm layui-btn-danger">删除</button>#}
                                 </div>
                             </td>
                         </tr>
