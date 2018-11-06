@@ -34,8 +34,11 @@
 
         <div class="layui-form-item">
             <div class="layui-input-block">
+                {% if site_count > 0 %}
                 <button class="layui-btn" lay-submit="" id="start_generate" lay-filter="demo1">开始生成</button>
-
+                {% else %}
+                    <button class="layui-btn layui-btn-disabled" lay-submit="" id="start_generate" lay-filter="demo1">开始生成</button>
+                {% endif %}
             </div>
         </div>
         {#        </form>#}

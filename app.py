@@ -398,7 +398,7 @@ def manage_site_generate_batch():
         try:
             with connection.cursor() as cursor:
                 # 查询服务器
-                server_sql = "SELECT COUNT(0) AS count FROM `site` WHERE state = 0"
+                server_sql = "SELECT COUNT(0) AS count FROM `site` WHERE is_generated = 0"
                 cursor.execute(server_sql)
                 site = cursor.fetchone()
 
