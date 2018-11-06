@@ -95,6 +95,9 @@
                         // update UI
                         percent = parseInt(data['current'] * 100 / data['total']);
                         element.progress('demo', percent + '%');
+                        if(percent == 100){
+                            layer.tips('生成完成', '#start_generate');
+                        }
                         {#nanobar.go(percent);#}
                         {#$(status_div.childNodes[1]).text(percent + '%');#}
                         {#$(status_div.childNodes[2]).text(data['status']);#}
@@ -132,10 +135,10 @@
                     //启动生成服务
                 var DISABLED = 'layui-btn-disabled';
                 if (othis.hasClass(DISABLED)) return;
-                element.progress('demo', '1%');
+                {#element.progress('demo', '1%');#}
                 $.ajax({
                     type: 'POST',
-                    url: '/longtask',
+                    url: '/manage/site_generate_batch_start',
                     success: function (data, status, request) {
                         othis.addClass(DISABLED);
                         status_url = data['Location'];

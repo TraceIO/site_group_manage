@@ -10,6 +10,7 @@ import pymysql.cursors
 from jinja2 import Environment, FileSystemLoader
 import paramiko
 
+from core.Generator import generator
 from flask_celery import make_celery
 from service.SiteService import batch_add_site
 from utils.regex_utils import re_web_url
@@ -326,7 +327,7 @@ def manage_site_generate(id):
                 else:
                     article = {}
                     # 读取内容
-                    if site['type'] == 0:
+                    if site['template_type'] == 0:
                         article_sql = "SELECT * FROM `article` WHERE `id`=%s LIMIT 1"
                         cursor.execute(article_sql, str(site['article_ids']).replace(',', ''))
                         article = cursor.fetchone()
@@ -405,6 +406,91 @@ def manage_site_generate_batch():
             connection.close()
 
         return render_template('/manage/site_generate_batch.html', site_count=site['count'])
+
+
+# 启动批量生成后台运行
+@app.route('/manage/site_generate_batch_start', methods=['POST'])
+def manage_site_generate_batch_start():
+    task = site_generate_task.apply_async()
+    return jsonify({'Location': url_for('site_generate_status', task_id=task.id), "code": 202})
+
+
+# 后台程序状态查询
+@app.route('/manage/site_generate_status/<task_id>')
+def site_generate_status(task_id):
+    task = site_generate_task.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
+
+
+# 批量生成html 后台程序
+@celery.task(bind=True)
+def site_generate_task(self):
+    site_list = []
+    connection = pymysql.connect(host='120.76.232.162',
+                                 user='root',
+                                 password='lcn@123',
+                                 db='site_group',
+                                 charset='utf8mb4',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    try:
+        with connection.cursor() as cursor:
+            sql = "SELECT site.*,site_template.type as template_type,site_template.path as template_path FROM `site` left join `site_template` on site_template.id = site.template_id WHERE site.`state`=0"
+            cursor.execute(sql)
+            site_list = cursor.fetchall()
+            len(site_list)
+
+            for index, site in enumerate(site_list):
+                if site['article_ids'] is not None and site['template_type'] is not None:
+                    # 有内容才生成
+                    article = {}
+                    # 读取内容
+                    if site['template_type'] == 0:
+                        article_sql = "SELECT * FROM `article` WHERE `id`=%s LIMIT 1"
+                        cursor.execute(article_sql, str(site['article_ids']).replace(',', ''))
+                        article = cursor.fetchone()
+                        PATH = os.path.dirname(os.path.abspath(__file__))
+                        generator(site, article, PATH)
+                        # 更新网站状态为：已生成
+                        sql = "UPDATE site SET is_generated=1 WHERE id=" + str(site['id'])
+                        cursor.execute(sql)
+                        connection.commit()
+
+                self.update_state(state='PROGRESS',
+                                  meta={'current': index, 'total': len(site_list),
+                                        'status': "OK"})
+                time.sleep(1)
+
+    finally:
+        connection.close()
+
+    return {'current': len(site_list), 'total': len(site_list), 'status': 'Task completed!',
+            'result': 42}
 
 
 # 复制文件
