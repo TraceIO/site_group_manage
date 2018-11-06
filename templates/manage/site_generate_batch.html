@@ -1,0 +1,158 @@
+{% extends "manage/layout.html" %}
+{% block title %}批量生成网站html-网站管理-管理后台{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <div style="padding: 15px;">
+        <blockquote class="layui-elem-quote layui-text">
+            批量生成网站html：1、生成所有未生成的网站html；2、将网站关键词随机散布在content内容中；
+            </a>
+        </blockquote>
+
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+            <legend>批量生成网站html</legend>
+        </fieldset>
+
+        {#        <form class="layui-form" id="example" action="" >#}
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">待生成网站</label>
+            <div class="layui-input-block">
+                {{ site_count }}
+            </div>
+        </div>
+
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label"></label>
+            <div class="layui-input-block">
+                <div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="demo">
+                    <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit="" id="start_generate" lay-filter="demo1">开始生成</button>
+
+            </div>
+        </div>
+        {#        </form>#}
+
+
+    </div>
+
+
+
+{% endblock %}
+
+{% block foot_script %}
+    <script>
+        var ifrmae;
+        layui.use(['form', 'layedit', 'laydate'], function () {
+            var $ = layui.jquery, element = layui.element;
+
+
+            {#var form = layui.form#}
+            {#    , layer = layui.layer#}
+            {#    , layedit = layui.layedit#}
+            {#    , laydate = layui.laydate;#}
+
+            //触发事件
+            var active = {
+                setPercent: function () {
+                    //设置50%进度
+                    element.progress('demo', '50%')
+                }
+                , loading: function (othis) {
+                    var DISABLED = 'layui-btn-disabled';
+                    if (othis.hasClass(DISABLED)) return;
+
+                    //模拟loading
+                    var n = 0, timer = setInterval(function () {
+                        n = n + Math.random() * 10 | 0;
+                        if (n > 100) {
+                            n = 100;
+                            clearInterval(timer);
+                            {#othis.removeClass(DISABLED);#}
+                            layer.tips('生成完成', '#start_generate');
+                        }
+                        element.progress('demo', n + '%');
+                    }, 300 + Math.random() * 1000);
+
+                    othis.addClass(DISABLED);
+                }
+            };
+
+            var updateProgress = {
+                update: function (status_url, othis) {
+                    {#alert(status_url);#}
+
+
+
+                    $.getJSON(status_url, function (data) {
+                        // update UI
+                        percent = parseInt(data['current'] * 100 / data['total']);
+                        element.progress('demo', percent + '%');
+                        {#nanobar.go(percent);#}
+                        {#$(status_div.childNodes[1]).text(percent + '%');#}
+                        {#$(status_div.childNodes[2]).text(data['status']);#}
+                        if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+                            if ('result' in data) {
+                                element.progress('demo', percent + '%');
+                                // show result
+                                {#$(status_div.childNodes[3]).text('Result: ' + data['result']);#}
+                            }
+                            else {
+                                // something unexpected happened
+                                {#$(status_div.childNodes[3]).text('Result: ' + data['state']);#}
+                            }
+                        }
+                        else {
+                            // rerun in 2 seconds
+                            setTimeout(function () {
+                                updateProgress['update'].call(this, status_url, othis);
+                            }, 2000);
+                        }
+                    });
+                }
+            }
+
+            $('#start_generate').on('click', function () {
+                {#var img = '<img src="/static/loading.gif" width="30px"/>'#}
+                {#$('#loading').html(img)#}
+                var othis = $(this);
+                {#active['loading'].call(this, othis);#}
+                /**
+                 setTimeout(function () {
+                    $('#loading').html('');
+                    layer.tips('重启完成', '#server_restart');
+                }, 3000);**/
+                    //启动生成服务
+                var DISABLED = 'layui-btn-disabled';
+                if (othis.hasClass(DISABLED)) return;
+                element.progress('demo', '1%');
+                $.ajax({
+                    type: 'POST',
+                    url: '/longtask',
+                    success: function (data, status, request) {
+                        othis.addClass(DISABLED);
+                        status_url = data['Location'];
+                        {#alert(status_url);#}
+                        updateProgress['update'].call(this, status_url);
+                    },
+                    error: function () {
+                        alert('Unexpected error');
+                    }
+                });
+
+            });
+            //监听提交
+
+
+        });
+
+
+    </script>
+{% endblock %}

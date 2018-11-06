@@ -1,19 +1,126 @@
 import datetime
+import random
 import time
 import os
 import json
-from flask import Flask, render_template, Response, request, redirect
+
+# from celery import Celery
+from flask import Flask, render_template, Response, request, redirect, url_for, jsonify
 import pymysql.cursors
 from jinja2 import Environment, FileSystemLoader
 import paramiko
 
+from flask_celery import make_celery
+from service.SiteService import batch_add_site
+from utils.regex_utils import re_web_url
+
 app = Flask(__name__)
 
+# celery = Celery('app', broker='redis://localhost:6379/1')
+# app.config.update(
+#     CELERY_BROKER_URL='redis://localhost:6379/1',
+#     CELERY_RESULT_BACKEND='redis://localhost:6379/1'
+# )
+
+
+# celery = Celery('app', broker='redis://localhost:6379/2')
+
+app.config.update(
+    CELERY_BROKER_URL='redis://localhost:6379/1',
+    CELERY_RESULT_BACKEND='redis://localhost:6379/7'
+)
+celery = make_celery(app)
+celery.conf.update(app.config)
+
+
+# celery = Celery(
+#         app.import_name,
+#         broker=app.config['CELERY_BROKER_URL'],
+#         backend=app.config['CELERY_RESULT_BACKEND']
+#     )
 
 @app.route('/')
 def hello_world():
     # return 'Hello World!'
-    return redirect("/manage/login")
+    print("耗时的请求")
+    result = long_time_def.delay()
+    print(result.result)
+    result.wait()  # 65
+    print(result.result)
+    print("a")
+    return "asdfas"
+    # return redirect("/manage/login")
+
+
+@app.route('/longtask', methods=['POST'])
+def longtask():
+    task = long_task.apply_async()
+    return jsonify({'Location': url_for('taskstatus', task_id=task.id), "code": 202})
+
+
+@app.route('/status/<task_id>')
+def taskstatus(task_id):
+    task = long_task.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        # job did not start yet
+        response = {
+            'state': task.state,
+            'current': 0,
+            'total': 1,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        # something went wrong in the background job
+        response = {
+            'state': task.state,
+            'current': 1,
+            'total': 1,
+            'status': str(task.info),  # this is the exception raised
+        }
+    return jsonify(response)
+
+
+@celery.task(bind=True)
+def long_task(self):
+    """Background task that runs a long function with progress reports."""
+    verb = ['Starting up', 'Booting', 'Repairing', 'Loading', 'Checking']
+    adjective = ['master', 'radiant', 'silent', 'harmonic', 'fast']
+    noun = ['solar array', 'particle reshaper', 'cosmic ray', 'orbiter', 'bit']
+    message = ''
+    total = random.randint(10, 50)
+    for i in range(total):
+        if not message or random.random() < 0.25:
+            message = '{0} {1} {2}...'.format(random.choice(verb),
+                                              random.choice(adjective),
+                                              random.choice(noun))
+        self.update_state(state='PROGRESS',
+                          meta={'current': i, 'total': total,
+                                'status': message})
+        time.sleep(1)
+    return {'current': 100, 'total': 100, 'status': 'Task completed!',
+            'result': 42}
+
+
+@celery.task()
+def add_together(a, b):
+    return a + b
+
+
+@celery.task()
+def long_time_def():
+    for _ in range(10000):
+        for j in range(10000):
+            i = 1
+    return 'hello'
 
 
 # 后台登录
@@ -137,6 +244,58 @@ def manage_site_add():
         return redirect("/manage/site_list")
 
 
+# 批量添加网站
+@app.route('/manage/site_add_batch', methods=['POST', 'GET'])
+def manage_site_add_batch():
+    if request.method == "GET":
+        servers = {}
+        connection = pymysql.connect(host='120.76.232.162',
+                                     user='root',
+                                     password='lcn@123',
+                                     db='site_group',
+                                     charset='utf8mb4',
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                # 查询服务器
+                server_sql = "SELECT * FROM `servers` WHERE state = 1"
+                cursor.execute(server_sql)
+                servers = cursor.fetchall()
+
+        finally:
+            connection.close()
+
+        return render_template('/manage/site_add_batch.html', servers=servers)
+    if request.method == "POST":
+        server_id = request.form.get('server')
+        domain = request.form.get('domain')
+        title = request.form.get('title')
+        keyword = request.form.get('keyword')
+        description = request.form.get('description')
+        domain_array = str(domain).splitlines()
+        title_array = str(title).splitlines()
+        keyword_array = str(keyword).splitlines()
+        desc_array = str(description).splitlines()
+
+        site_array = []
+
+        for index, d_url in enumerate(domain_array):
+            a = re_web_url(d_url)
+            if a is not None:
+                print(d_url)
+                site = {
+                    "domain": d_url,
+                    "title": title_array[index],
+                    "keyword": keyword_array[index],
+                    "description": desc_array[index],
+                    "server_id": server_id
+                }
+                site_array.append(site)
+        # 插入数据库
+        batch_add_site(site_array)
+        return redirect("/manage/site_list")
+
+
 # 生成html
 @app.route("/manage/site_generate/<int:id>")
 def manage_site_generate(id):
@@ -222,6 +381,30 @@ def manage_site_generate(id):
         connection.close()
 
     return Response(json.dumps(site), mimetype='application/json')
+
+
+# 生成html
+@app.route("/manage/site_generate_batch")
+def manage_site_generate_batch():
+    if request.method == "GET":
+        site = {}
+        connection = pymysql.connect(host='120.76.232.162',
+                                     user='root',
+                                     password='lcn@123',
+                                     db='site_group',
+                                     charset='utf8mb4',
+                                     cursorclass=pymysql.cursors.DictCursor)
+        try:
+            with connection.cursor() as cursor:
+                # 查询服务器
+                server_sql = "SELECT COUNT(0) AS count FROM `site` WHERE state = 0"
+                cursor.execute(server_sql)
+                site = cursor.fetchone()
+
+        finally:
+            connection.close()
+
+        return render_template('/manage/site_generate_batch.html', site_count=site['count'])
 
 
 # 复制文件
@@ -464,4 +647,4 @@ def server_list():
 
 if __name__ == '__main__':
     # app.run(debug=True, threaded=True)
-    app.run()
+    app.run(debug=True, threaded=True)

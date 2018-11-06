@@ -9,9 +9,9 @@
         <blockquote class="layui-elem-quote">
 
 
-{#            <a href="/manage/server_add" class="layui-btn">#}
-{#                <i class="layui-icon">&#xe608;</i> 添加服务器#}
-{#            </a>#}
+            {#            <a href="/manage/server_add" class="layui-btn">#}
+            {#                <i class="layui-icon">&#xe608;</i> 添加服务器#}
+            {#            </a>#}
 
         </blockquote>
 
@@ -21,10 +21,10 @@
         <div class="layui-form">
             <table class="layui-table">
                 <colgroup>
-                    <col width="150">
-                    <col width="150">
-                    <col width="150">
-                    <col width="200">
+                    <col width="">
+                    <col width="">
+                    <col width="">
+                    <col width="">
                     <col>
                 </colgroup>
                 <thead>
@@ -60,10 +60,15 @@
                         </td>
                         <td>
                             <div class="layui-btn-group">
-                                <a href="javascript:;" id="server_restart" class="layui-btn layui-btn-sm layui-btn-warm">重启Nginx</a>
+                                <a href="javascript:;" id="server_restart"
+                                   class="layui-btn layui-btn-sm layui-btn-warm">重启Nginx</a>
                                 <span id="loading">服务器重启成功</span>
                             </div>
+                            <div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="demo">
+                                <div class="layui-progress-bar layui-bg-red" lay-percent="0%"></div>
+                            </div>
                         </td>
+
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -76,7 +81,7 @@
     <script>
         var ifrmae;
         layui.use(['form', 'layedit', 'laydate'], function () {
-            var $ = layui.jquery;
+            var $ = layui.jquery,element = layui.element;
 
 
             var form = layui.form
@@ -84,18 +89,42 @@
                 , layedit = layui.layedit
                 , laydate = layui.laydate;
 
+            //触发事件
+              var active = {
+                setPercent: function(){
+                  //设置50%进度
+                  element.progress('demo', '50%')
+                }
+                ,loading: function(othis){
+                  var DISABLED = 'layui-btn-disabled';
+                  if(othis.hasClass(DISABLED)) return;
+
+                  //模拟loading
+                  var n = 0, timer = setInterval(function(){
+                    n = n + Math.random()*10|0;
+                    if(n>100){
+                      n = 100;
+                      clearInterval(timer);
+                      othis.removeClass(DISABLED);
+                      layer.tips('重启完成', '#server_restart');
+                    }
+                    element.progress('demo', n+'%');
+                  }, 300+Math.random()*1000);
+
+                  othis.addClass(DISABLED);
+                }
+              };
+
             $('#server_restart').on('click', function () {
-                var img = '<img src="/static/loading.gif" width="30px"/>'
-                $('#loading').html(img)
-
-                setTimeout(function(){$('#loading').html('');layer.tips('重启完成', '#server_restart');},3000);
-
-                {#var t1=window.setTimeout(refreshCount, 1000 * 5);#}
-                {#function refreshCount() {#}
-                {#  $('#loading').html('服务器重启成功');#}
-                {#}#}
-                {#//去掉定时器的方法#}
-                {#window.clearTimeout(t1);#}
+                {#var img = '<img src="/static/loading.gif" width="30px"/>'#}
+                {#$('#loading').html(img)#}
+                var othis = $(this);
+                active['loading'].call(this, othis);
+                /**
+                setTimeout(function () {
+                    $('#loading').html('');
+                    layer.tips('重启完成', '#server_restart');
+                }, 3000);**/
 
             });
         })
