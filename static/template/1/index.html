@@ -1,46 +1,58 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>{{ site.title }}</title>
-<meta charset="utf-8">
-<meta name="renderer" content="webkit|ie-comp|ie-stand">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
-<meta name="keywords" content="{{ site.keyword }}">
-<meta name="description" content="{{ site.description }}">
-<LINK rel="Bookmark" href="favicon.ico" >
-<LINK rel="Shortcut Icon" href="favicon.ico" />
-<!--[if lt IE 9]>
+    <title>{{ site.title }}</title>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp"/>
+    <meta name="keywords" content="{{ site.keyword }}">
+    <meta name="description" content="{{ site.description }}">
+    <LINK rel="Bookmark" href="favicon.ico">
+    <LINK rel="Shortcut Icon" href="favicon.ico"/>
+    <!--[if lt IE 9]>
 <script type="text/javascript" src="/staticRes/js/html5shiv.js"></script>
 <script type="text/javascript" src="/staticRes/js/respond.min.js"></script>
 <![endif]-->
-<link rel="stylesheet" type="text/css" href="css/H-ui.min.css" />
-<!-- <link rel="stylesheet" type="text/css" href="plugin/Hui-iconfont/1.0.8/iconfont.min.css" /> -->
-<link rel="stylesheet" type="text/css" href="css/common.css" />
-<link rel="stylesheet" type="text/css" href="css/pifu.css" />
+    <link rel="stylesheet" type="text/css" href="css/H-ui.min.css"/>
+    <!-- <link rel="stylesheet" type="text/css" href="plugin/Hui-iconfont/1.0.8/iconfont.min.css" /> -->
+    <link rel="stylesheet" type="text/css" href="css/common.css"/>
+    <link rel="stylesheet" type="text/css" href="css/pifu.css"/>
 
-<!--[if lt IE 9]>
+    <!--[if lt IE 9]>
 <link href="/staticRes/lib/h-ui/css/H-ui.ie.css" rel="stylesheet" type="text/css" />
 <![endif]-->
-<script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } function showSide(){$('.navbar-nav').toggle();}</script>
+    <script type="application/x-javascript"> addEventListener("load", function () {
+        setTimeout(hideURLbar, 0);
+    }, false);
+
+    function hideURLbar() {
+        window.scrollTo(0, 1);
+    }
+
+    function showSide() {
+        $('.navbar-nav').toggle();
+    }</script>
 </head>
 <body>
 <header class="navbar-wrapper">
     <div class="navbar navbar-fixed-top">
         <div class="container cl">
             <a class="navbar-logo hidden-xs" href="http://{{ site.domain }}">
-                <img class="logo" src="img/logo.png" alt="{{ site.title }}" />
+                <img class="logo" src="img/logo.png" alt="{{ site.title }}"/>
             </a>
             <a class="logo navbar-logo-m visible-xs" href="/">{{ site.title }}</a>
-            <a aria-hidden="false" class="nav-toggle Hui-iconfont visible-xs" href="javascript:void(0);" onclick="showSide();">&#xe667;</a>
+            <a aria-hidden="false" class="nav-toggle Hui-iconfont visible-xs" href="javascript:void(0);"
+               onclick="showSide();">&#xe667;</a>
             <nav class="nav navbar-nav nav-collapse w_menu" role="navigation">
                 <ul class="cl">
-                    <li class="active"> <a href="/" data-hover="首页">首页</a> </li>
-                    <li> <a href="#about.html" data-hover="关于我">关于我</a> </li>
-                    <li> <a href="#mood.html" data-hover="碎言碎语">碎言碎语</a> </li>
+                    <li class="active"><a href="/" data-hover="首页">首页</a></li>
+                    <li><a href="#about.html" data-hover="关于我">关于我</a></li>
+                    <li><a href="#mood.html" data-hover="碎言碎语">碎言碎语</a></li>
                     <li><a href="#article.html" data-hover="学无止尽">学无止尽</a></li>
-                    <li> <a href="#board.html" data-hover="留言板">留言板</a> </li>
+                    <li><a href="#board.html" data-hover="留言板">留言板</a></li>
                 </ul>
             </nav>
 
@@ -50,137 +62,145 @@
 
 <!--导航条-->
 <nav class="breadcrumb">
-  <div class="container"> <i class="Hui-iconfont">&#xe67f;</i> <a href="/" class="c-primary">首页</a> <span class="c-gray en">&gt;</span>  <span class="c-gray">文章</span> <span class="c-gray en">&gt;</span>  <span class="c-gray">{{ article.title }}</span></div>
+    <div class="container"><i class="Hui-iconfont">&#xe67f;</i> <a href="/" class="c-primary">首页</a> <span
+            class="c-gray en">&gt;</span> <span class="c-gray">文章</span> <span class="c-gray en">&gt;</span> <span
+            class="c-gray">{{ article.title }}</span></div>
 </nav>
 
 <section class="container pt-20">
-	
-	<div class="row w_main_row">
-				
-				
-				<div class="col-lg-9 col-md-9 w_main_left">
-					<div class="panel panel-default  mb-20">
-						<div class="panel-body pt-10 pb-10">
-							<h2 class="c_titile">{{ article.title }}</h2>
-							<p class="box_c"><span class="d_time">发布时间：2017-02-05</span><span>编辑：<a href="mailto:wfyv@qq.com">wilco</a></span><span>阅读（88646）</span></p>
-							<ul class="infos">
-								 {{ article.content }}
-								
-							</ul>
-															
-							<div class="keybq">
-						    	<p><span>关键字</span>：
-                                    {% for k in article.keyword.split(',') %}
-                                    <a class="label label-default">{{ k }}</a>
-                                    {% endfor %}
+
+    <div class="row w_main_row">
 
 
-                                </p>
-						    </div>
-							
-							
-							
-{#							<div class="nextinfo">#}
-{#								<p class="last">上一篇：<a href="#">免费收录网站搜索引擎登录口大全</a></p>#}
-{#								<p class="next">下一篇：<a href="#">javascript显示年月日时间代码</a></p>#}
-{#						    </div>#}
-							
-						</div>
-					</div>
-					
-					<div class="panel panel-default  mb-20">
-						<div class="tab-category">
-                <a href=""><strong>评论区</strong></a>
-            </div>
-						<div class="panel-body">
-							<div class="panel-body" style="margin: 0 3%;">
-                    <div class="mb-20">
-                    	<ul class="commentList">
-                            <li class="item cl"> <a href="#"><i class="avatar size-L radius"><img alt="" src="http://qzapp.qlogo.cn/qzapp/101388738/1CF8425D24660DB8C3EBB76C03D95F35/100"></i></a>
-                                <div class="comment-main">
-                                    <header class="comment-header">
-                                        <div class="comment-meta"><a class="comment-author" href="#">老王</a>
-                                            <time title="2014年8月31日 下午3:20" datetime="2014-08-31T03:54:20" class="f-r">2014-8-31 15:20</time>
-                                        </div>
-                                    </header>
-                                    <div class="comment-body">
-                                        <p> 是的</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="item cl"> <a href="#"><i class="avatar size-L radius"><img alt="" src="http://qzapp.qlogo.cn/qzapp/101388738/696C8A17B3383B88804BA92ECBAA5D81/100"></i></a>
-                                <div class="comment-main">
-                                    <header class="comment-header">
-                                        <div class="comment-meta"><a class="comment-author" href="#">老王</a>
-                                            <time title="2014年8月31日 下午3:20" datetime="2014-08-31T03:54:20" class="f-r">2014-8-31 15:20</time>
-                                        </div>
-                                    </header>
-                                    <div class="comment-body">
-                                        <p> +1</p>
-                                    </div>
-                                </div>
-                            </li>
+        <div class="col-lg-9 col-md-9 w_main_left">
+            <div class="panel panel-default  mb-20">
+                <div class="panel-body pt-10 pb-10">
+                    <h2 class="c_titile">{{ article.title }}</h2>
+                    <p class="box_c"><span class="d_time">发布时间：2017-02-05</span><span>编辑：<a href="mailto:wfyv@qq.com">wilco</a></span><span>阅读（88646）</span>
+                    </p>
+                    <ul class="infos">
+                        {{ article.content }}
 
-                        </ul>
-    
+                    </ul>
+
+                    <div class="keybq">
+                        <p><span>关键字</span>：
+                            {% for k in site.keyword.split(',') %}
+                                <a class="label label-default">{{ k }}</a>
+                            {% endfor %}
+
+
+                        </p>
                     </div>
-                    <div class="line"></div>
-                    
+
+
+                    {#							<div class="nextinfo">#}
+                    {#								<p class="last">上一篇：<a href="#">免费收录网站搜索引擎登录口大全</a></p>#}
+                    {#								<p class="next">下一篇：<a href="#">javascript显示年月日时间代码</a></p>#}
+                    {#						    </div>#}
 
                 </div>
-						</div>
-					</div>
-				</div>
-				<div class="col-lg-3 col-md-3">
-					<!--热门推荐-->
-  	<div class="bg-fff box-shadow radius mb-20">
-			<div class="tab-category">
-				<a href=""><strong>热门推荐</strong></a>
-			</div>
-			<div class="tab-category-item">
-				<ul class="index_recd">
-					<li>
-						<a href="#">阻止a标签href默认跳转事件</a>
-						<p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
-					</li>
-					<li >
-						<a href="#">PHP面试题汇总</a>
-						<p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
-					</li>
-					<li >
-						<a href="#">阻止a标签href默认跳转事件</a>
-						<p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
-					</li>
-					<li >
-						<a href="#">阻止a标签href默认跳转事件</a>
-						<p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
-					</li>
-					<li >
-						<a href="#">PHP面试题汇总</a>
-						<p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
-					</li>
-				</ul>
-			</div>
-		</div>
-						
-					<!--图片-->
-		<div class="bg-fff box-shadow radius mb-20">
-			<div class="tab-category">
-				<a href=""><strong>扫我关注</strong></a>
-			</div>
-			<div class="tab-category-item">
-				<img data-original="temp/gg.jpg" class="img-responsive lazyload" alt="响应式图片">
-			</div>
-		</div>
-					
-				</div>
-			</div>
-	
+            </div>
+
+            <div class="panel panel-default  mb-20">
+                <div class="tab-category">
+                    <a href=""><strong>评论区</strong></a>
+                </div>
+                <div class="panel-body">
+                    <div class="panel-body" style="margin: 0 3%;">
+                        <div class="mb-20">
+                            <ul class="commentList">
+                                <li class="item cl"><a href="#"><i class="avatar size-L radius"><img alt=""
+                                                                                                     src="http://qzapp.qlogo.cn/qzapp/101388738/1CF8425D24660DB8C3EBB76C03D95F35/100"></i></a>
+                                    <div class="comment-main">
+                                        <header class="comment-header">
+                                            <div class="comment-meta"><a class="comment-author" href="#">老王</a>
+                                                <time title="2014年8月31日 下午3:20" datetime="2014-08-31T03:54:20"
+                                                      class="f-r">2014-8-31 15:20
+                                                </time>
+                                            </div>
+                                        </header>
+                                        <div class="comment-body">
+                                            <p> 是的</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="item cl"><a href="#"><i class="avatar size-L radius"><img alt=""
+                                                                                                     src="http://qzapp.qlogo.cn/qzapp/101388738/696C8A17B3383B88804BA92ECBAA5D81/100"></i></a>
+                                    <div class="comment-main">
+                                        <header class="comment-header">
+                                            <div class="comment-meta"><a class="comment-author" href="#">老王</a>
+                                                <time title="2014年8月31日 下午3:20" datetime="2014-08-31T03:54:20"
+                                                      class="f-r">2014-8-31 15:20
+                                                </time>
+                                            </div>
+                                        </header>
+                                        <div class="comment-body">
+                                            <p> +1</p>
+                                        </div>
+                                    </div>
+                                </li>
+
+                            </ul>
+
+                        </div>
+                        <div class="line"></div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-3">
+            <!--热门推荐-->
+            <div class="bg-fff box-shadow radius mb-20">
+                <div class="tab-category">
+                    <a href=""><strong>热门推荐</strong></a>
+                </div>
+                <div class="tab-category-item">
+                    <ul class="index_recd">
+                        <li>
+                            <a href="#">阻止a标签href默认跳转事件</a>
+                            <p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
+                        </li>
+                        <li>
+                            <a href="#">PHP面试题汇总</a>
+                            <p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
+                        </li>
+                        <li>
+                            <a href="#">阻止a标签href默认跳转事件</a>
+                            <p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
+                        </li>
+                        <li>
+                            <a href="#">阻止a标签href默认跳转事件</a>
+                            <p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
+                        </li>
+                        <li>
+                            <a href="#">PHP面试题汇总</a>
+                            <p class="hits"><i class="Hui-iconfont" title="点击量">&#xe622;</i> 276 </p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!--图片-->
+            <div class="bg-fff box-shadow radius mb-20">
+                <div class="tab-category">
+                    <a href=""><strong>扫我关注</strong></a>
+                </div>
+                <div class="tab-category-item">
+                    <img data-original="temp/gg.jpg" class="img-responsive lazyload" alt="响应式图片">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </section>
 <footer class="footer mt-20">
-		<p>Copyright &copy;2017 wfyvv.com All Rights Reserved. <br>
-			<a href="http://www.miitbeian.gov.cn/" target="_blank" rel="nofollow">皖ICP备17002922号</a><br>
-		</p>
+    <p>Copyright &copy;2017 wfyvv.com All Rights Reserved. <br>
+        <a href="http://www.miitbeian.gov.cn/" target="_blank" rel="nofollow">皖ICP备17002922号</a><br>
+    </p>
 </footer>
 
 </body>

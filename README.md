@@ -22,7 +22,7 @@
 #### MySql 
 依赖MySql数据库，所以这是必须的；
 #### Celery
-由于批量生成html功能运行时间长，所以采用了Celery作为后台异步运行。如果没有Celery会导致网页无法正常显示进度条。
+由于批量生成html功能运行时间长，所以采用了Celery作为后台异步运行。如果没有Celery会导致后台程序无法运行（影响的功能有：批量生成、）。
 后台程序启动命令：
 ```
 celery worker -l INFO -A app.celery

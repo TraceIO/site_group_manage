@@ -6,7 +6,7 @@ def re_web_url(url):
    (http://|https://)?
    ([a-z1-9A-Z]+\.)?
    ([a-z1-9A-Z]+)
-   (\.com|\.cn|\.org|\.com\.cn|\.net|\.net\.cn|\.cc|\.tv|\.vip|\.xin|\.top|\.info)
+   (\.[a-z])
    )''', re.VERBOSE)  # 匹配网址，
 
     match = addr_regex.match(url)
