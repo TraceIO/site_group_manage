@@ -23,7 +23,7 @@ class Site(DbBase):
         :param site_model:
         :return:
         """
-        sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`,`article_ids`,`server_id`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s,%s,%s)"
+        sql = "INSERT INTO `site` (`title`, `web_path`,`template_id`, `domain`,`keyword`, `description`,`state`, `create_time`,`article_id`,`server_id`) VALUES (%s, %s, %s, %s, %s,%s,%s,%s,%s,%s)"
         # cursor.execute(sql, (
         #                 str(title), str(web_path), template, str(domain), str(keyword), str(description), 0,
         #                 int(time.time()), str(article_ids), str(server_id)))

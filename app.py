@@ -35,7 +35,7 @@ def hello_world():
     print("耗时的请求")
     result = long_time_def.delay()
     print(result.result)
-    result.wait()  # 65
+    # result.wait()  # 65
 
     return redirect("/manage/login")
     # return Response(json.dumps(result), mimetype='application/json')
@@ -437,7 +437,8 @@ def manage_site_publish(id):
     publisher = Publisher()
     publisher.sftp_put(remote_dir, local_dir, site['web_path'], site['host'], site['port'],
                        site['user_name'],
-                       site['user_pwd'])
+                       site['user_pwd'],
+                       site['nginx_config_path'])
 
     # 更新网站状态为：已生成
     site_service.update_released_state(id)

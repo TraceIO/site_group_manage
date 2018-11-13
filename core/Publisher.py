@@ -2,11 +2,12 @@ import paramiko
 import datetime
 import os
 
+
 class Publisher(object):
 
-
     # sftp上传到服务器
-    def sftp_put(self, remote_dir, local_dir, site_id, server_host, server_port, user_name, user_pwd):
+    def sftp_put(self, remote_dir, local_dir, site_id, server_host, server_port, user_name, user_pwd,
+                 nginx_config_path):
         # 连接服务器
         transport = paramiko.Transport((server_host, server_port))
         transport.connect(username=user_name, password=user_pwd)
@@ -71,7 +72,7 @@ class Publisher(object):
         #
         #
         # # 将resutl.txt 上传至服务器 /tmp/result.txt
-        sftp.put(local_dir + '/' + site_id + '.conf', '/etc/nginx/conf.d/' + site_id + '.conf')
+        sftp.put(local_dir + '/' + site_id + '.conf', nginx_config_path + site_id + '.conf')
         # # 将result.txt 下载到本地
         # sftp.get('/tmp/result.txt', '~/yours.txt')
         transport.close()

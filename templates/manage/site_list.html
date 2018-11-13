@@ -53,7 +53,11 @@
                     <tr>
                         <td>{{ site.title }}</td>
                         <td>{{ site.template_title }}（{% if site.type == 0 %}单页面{% else %}多页面{% endif %}）</td>
-                        <td>{{ site.domain }}</td>
+                        <td>
+                            <a href="http://{{ site.domain }}">
+                            {{ site.domain }}
+                            </a>
+                        </td>
                         <td>{{ site.host }}</td>
                         <td>{{ site.description }}</td>
                         <td>
